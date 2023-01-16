@@ -327,6 +327,7 @@ func parseObject(s string, c *cache, depth int) (*Value, string, error) {
 }
 
 func escapeString(dst []byte, s string) []byte {
+	dst = append(dst, 34)
 	for i := 0; i < len(s); i++ {
 		c := s[i]
 		switch {
@@ -355,6 +356,7 @@ func escapeString(dst []byte, s string) []byte {
 			dst = append(dst, []byte{92, 117, 48, 49, 71 + c, 48}...)
 		}
 	}
+	dst = append(dst, 34)
 	return dst
 }
 
