@@ -2,10 +2,11 @@ package fastjson
 
 import (
 	"fmt"
-	"github.com/aperturerobotics/fastjson/fastfloat"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"github.com/aperturerobotics/fastjson/fastfloat"
 )
 
 // Parser parses JSON.
@@ -897,6 +898,19 @@ func (v *Value) GetUint64(keys ...string) uint64 {
 		return 0
 	}
 	return fastfloat.ParseUint64BestEffort(v.s)
+}
+
+// GetNumberAsStringBytes returns string representation of the numeric value by the given keys path.
+//
+// Array indexes may be represented as decimal numbers in keys.
+//
+// nil is returned for non-existing keys path or for invalid value type.
+func (v *Value) GetNumberAsStringBytes(keys ...string) []byte {
+	v = v.Get(keys...)
+	if v == nil || v.Type() != TypeNumber {
+		return nil
+	}
+	return s2b(v.s)
 }
 
 // GetStringBytes returns string value by the given keys path.
