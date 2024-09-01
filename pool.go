@@ -44,7 +44,9 @@ func (ap *ArenaPool) Get() *Arena {
 	return v.(*Arena)
 }
 
-// Put returns a to ap.
+// Put returns a to ap. This does not automatically reset the Arena.
+// You should either Reset the arena before putting it back into the
+// pool, or you should Reset any arena you get back from Get.
 //
 // a and objects created by a cannot be used after a is put into ap.
 func (ap *ArenaPool) Put(a *Arena) {

@@ -1,6 +1,7 @@
 package fastjson
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -8,10 +9,10 @@ import (
 //
 // Typical Arena lifecycle:
 //
-//     1) Construct Values via the Arena and Value.Set* calls.
-//     2) Marshal the constructed Values with Value.MarshalTo call.
-//     3) Reset all the constructed Values at once by Arena.Reset call.
-//     4) Go to 1 and re-use the Arena.
+//  1. Construct Values via the Arena and Value.Set* calls.
+//  2. Marshal the constructed Values with Value.MarshalTo call.
+//  3. Reset all the constructed Values at once by Arena.Reset call.
+//  4. Go to 1 and re-use the Arena.
 //
 // It is unsafe calling Arena methods from concurrent goroutines.
 // Use per-goroutine Arenas or ArenaPool instead.
@@ -52,7 +53,10 @@ func (a *Arena) NewArray() *Value {
 	return v
 }
 
-// NewString returns new string value containing s.
+// NewString returns new string value containing s. The data in
+// s is assumed to have a valid permanent lifetime. Use the
+// NewStringBytes function if the string data needs to be copied
+// into the arena.
 //
 // The returned string is valid until Reset is called on a.
 func (a *Arena) NewString(s string) *Value {
@@ -110,6 +114,25 @@ func (a *Arena) NewNumberString(s string) *Value {
 	return v
 }
 
+// NewNumberStringBytes returns a new number value containing b.
+//
+// The returned number is valid until Reset is called on a.
+func (a *Arena) NewNumberStringBytes(b []byte) *Value {
+	v := a.c.getValue()
+	v.t = TypeNumber
+	v.s = a.AllocateStringFromStringBytes(b)
+	return v
+}
+
+// Allocates room for the string from the arena for the string from the given string bytes
+//
+// The returned string is only valid until Reset is called on a.
+func (a *Arena) AllocateStringFromStringBytes(b []byte) string {
+	bLen := len(a.b)
+	a.b = append(a.b, b...)
+	return b2s(a.b[bLen:])
+}
+
 // NewNull returns null value.
 func (a *Arena) NewNull() *Value {
 	return valueNull
@@ -123,4 +146,44 @@ func (a *Arena) NewTrue() *Value {
 // NewFalse return false value.
 func (a *Arena) NewFalse() *Value {
 	return valueFalse
+}
+
+// Makes a deep copy of a value using this Arena as the memory source.
+// Useful when you want to copy a value with a shorter lifetime (for
+// example, a value produced by a Scanner) to an Arena with a longer
+// lifetime.
+func (a *Arena) DeepCopyValue(v *Value) *Value {
+	t := v.Type()
+	switch t {
+	case TypeObject:
+		o := v.GetObject()
+		newObject := a.NewObject()
+		o.Visit(func(key []byte, vv *Value) {
+			newObject.Set(a.AllocateStringFromStringBytes(key), a.DeepCopyValue(vv))
+		})
+		return newObject
+	case TypeArray:
+		entries := v.GetArray()
+		newArray := a.NewArray()
+		for i, vv := range entries {
+			newItem := (*Value)(nil)
+			if vv != nil {
+				newItem = a.DeepCopyValue(vv)
+			}
+			newArray.SetArrayItem(i, newItem)
+		}
+		return newArray
+	case TypeString:
+		return a.NewStringBytes(v.GetStringBytes())
+	case TypeNumber:
+		return a.NewNumberStringBytes(v.GetNumberAsStringBytes())
+	case TypeTrue:
+		return a.NewTrue()
+	case TypeFalse:
+		return a.NewFalse()
+	case TypeNull:
+		return a.NewNull()
+	default:
+		panic(fmt.Errorf("BUG: unknown Value type: %d", t))
+	}
 }
