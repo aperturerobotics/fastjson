@@ -37,7 +37,7 @@ func (a *Arena) Reset() {
 func (a *Arena) NewObject() *Value {
 	v := a.c.getValue()
 	v.t = TypeObject
-	v.o.reset()
+	v.o.Reset()
 	return v
 }
 

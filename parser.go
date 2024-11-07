@@ -280,13 +280,13 @@ func parseObject(s string, c *cache, depth int) (*Value, string, error) {
 	if s[0] == '}' {
 		v := c.getValue()
 		v.t = TypeObject
-		v.o.reset()
+		v.o.Reset()
 		return v, s[1:], nil
 	}
 
 	o := c.getValue()
 	o.t = TypeObject
-	o.o.reset()
+	o.o.Reset()
 	for {
 		var err error
 		kv := o.o.getKV()
@@ -528,7 +528,8 @@ type Object struct {
 	keysUnescaped bool
 }
 
-func (o *Object) reset() {
+// Removes all values from this object
+func (o *Object) Reset() {
 	o.kvs = o.kvs[:0]
 	o.keysUnescaped = false
 }
