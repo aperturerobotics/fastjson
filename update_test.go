@@ -101,3 +101,39 @@ func TestValueDelSet(t *testing.T) {
 	v.Set("x", MustParse(`[]`))
 	v.SetArrayItem(1, MustParse(`[]`))
 }
+
+func TestObjectDelMany(t *testing.T) {
+	var p Parser
+	var o *Object
+
+	o.Del("xx")
+
+	v, err := p.Parse(`{"fo\no": "bar", "x": [1,2,3], "a": 1, "b": 2, "c": 3, "d": 4, "e": 5, "a": "duplicate_key"}`)
+	if err != nil {
+		t.Fatalf("unexpected error during parse: %s", err)
+	}
+	o, err = v.Object()
+	if err != nil {
+		t.Fatalf("cannot obtain object: %s", err)
+	}
+
+	keysToDelete := map[string]struct{}{
+		"fo\no":          {},
+		"a":              {},
+		"c":              {},
+		"does_not_exist": {},
+	}
+	numDeleted := o.DelMany(keysToDelete)
+	if numDeleted != 4 {
+		t.Fatalf("unexpected number of deleted items; got %d; want %d", numDeleted, 4)
+	}
+
+	str := o.String()
+	strExpected := `{"x":[1,2,3],"b":2,"d":4,"e":5}`
+	if str != strExpected {
+		t.Fatalf("unexpected string representation for o: got %q; want %q", str, strExpected)
+	}
+
+	o = nil
+	o.DelMany(keysToDelete)
+}

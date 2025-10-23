@@ -31,6 +31,27 @@ func (o *Object) Del(key string) {
 	}
 }
 
+// DelMany deletes the entries of o whose keys are in keysToDelete, and returns
+// the number of entries it deleted, counting each entry of a duplicated key.
+func (o *Object) DelMany(keysToDelete map[string]struct{}) int {
+	if o == nil {
+		return 0
+	}
+	o.unescapeKeys()
+	numDeleted := 0
+	nextUsedIndex := 0
+	for _, kv := range o.kvs {
+		if _, exists := keysToDelete[kv.k]; !exists {
+			o.kvs[nextUsedIndex] = kv
+			nextUsedIndex++
+		} else {
+			numDeleted++
+		}
+	}
+	o.kvs = o.kvs[:nextUsedIndex]
+	return numDeleted
+}
+
 // Del deletes the entry with the given key from array or object v.
 func (v *Value) Del(key string) {
 	if v == nil {
