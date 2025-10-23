@@ -1251,6 +1251,38 @@ func TestParserParse(t *testing.T) {
 	})
 }
 
+func TestReverseVisit(t *testing.T) {
+	var p Parser
+	v, err := p.Parse(citmFixture)
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	o, err := v.Object()
+	if err != nil {
+		t.Fatalf("cannot obtain object: %s", err)
+	}
+	var arena Arena
+	var expectedKeys []string
+	var expectedValues []*Value
+	o.Visit(func(k []byte, v *Value) {
+		expectedKeys = append(expectedKeys, string(k))
+		expectedValues = append(expectedValues, arena.DeepCopyValue(v))
+	})
+	i := len(expectedKeys) - 1
+	o.ReverseVisit(func(key []byte, v *Value) bool {
+		if string(key) != expectedKeys[i] {
+			t.Fatalf("unexpected key at index %d; got %s; want %s", i, string(key), expectedKeys[i])
+		}
+		expectedValueStr := expectedValues[i].String()
+		actualValueStr := v.String()
+		if actualValueStr != expectedValueStr {
+			t.Fatalf("unexpected value at index %d; got %s; want %s", i, actualValueStr, expectedValueStr)
+		}
+		i--
+		return true
+	})
+}
+
 func TestParseBigObject(t *testing.T) {
 	const itemsCount = 10000
 
