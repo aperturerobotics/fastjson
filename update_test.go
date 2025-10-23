@@ -137,3 +137,29 @@ func TestObjectDelMany(t *testing.T) {
 	o = nil
 	o.DelMany(keysToDelete)
 }
+
+func TestSetArrayLength(t *testing.T) {
+	var p Parser
+	v, err := p.Parse(`{"x": [1, 2, 3]}`)
+	if err != nil {
+		t.Fatalf("unexpected error during parse: %s", err)
+	}
+
+	va := v.Get("x")
+	va.SetArrayLength(5)
+	str := v.String()
+	strExpected := `{"x":[1,2,3,null,null]}`
+	if str != strExpected {
+		t.Fatalf("unexpected string representation after lengthening: got %q; want %q", str, strExpected)
+	}
+
+	va.SetArrayLength(2)
+	str = v.String()
+	strExpected = `{"x":[1,2]}`
+	if str != strExpected {
+		t.Fatalf("unexpected string representation after shortening: got %q; want %q", str, strExpected)
+	}
+
+	va = nil
+	va.SetArrayLength(10)
+}
