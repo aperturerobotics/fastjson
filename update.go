@@ -31,6 +31,27 @@ func (o *Object) Del(key string) {
 	}
 }
 
+// DelMany deletes all entries from o who are present in the given keysToDelete set.
+// Returns the number of keys that were deleted
+func (o *Object) DelMany(keysToDelete map[string]struct{}) int {
+	if o == nil {
+		return 0
+	}
+	o.unescapeKeys()
+	numDeleted := 0
+	nextUsedIndex := 0
+	for _, kv := range o.kvs {
+		if _, exists := keysToDelete[kv.k]; !exists {
+			o.kvs[nextUsedIndex] = kv
+			nextUsedIndex++
+		} else {
+			numDeleted++
+		}
+	}
+	o.kvs = o.kvs[:nextUsedIndex]
+	return numDeleted
+}
+
 // Del deletes the entry with the given key from array or object v.
 func (v *Value) Del(key string) {
 	if v == nil {
@@ -107,4 +128,18 @@ func (v *Value) SetArrayItem(idx int, value *Value) {
 		v.a = append(v.a, valueNull)
 	}
 	v.a[idx] = value
+}
+
+// SetArrayLength lengthens or shortens (cuts off the end) of the
+// array v to the given length.
+func (v *Value) SetArrayLength(length int) {
+	if v == nil || v.t != TypeArray {
+		return
+	}
+	for length > len(v.a) {
+		v.a = append(v.a, valueNull)
+	}
+	if len(v.a) > length {
+		v.a = v.a[:length]
+	}
 }

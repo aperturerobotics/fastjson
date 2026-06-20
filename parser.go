@@ -634,6 +634,25 @@ func (o *Object) Visit(f func(key []byte, v *Value)) {
 	}
 }
 
+// ReverseVisit calls f for each item in the o in reverse of the original order
+// of the parsed JSON. f should return true to keep iterating or false to stop.
+//
+// f cannot hold key and/or v after returning.
+func (o *Object) ReverseVisit(f func(key []byte, v *Value) bool) {
+	if o == nil {
+		return
+	}
+
+	o.unescapeKeys()
+
+	for i := len(o.kvs) - 1; i >= 0; i-- {
+		kv := &o.kvs[i]
+		if !f(s2b(kv.k), kv.v) {
+			break
+		}
+	}
+}
+
 // Value represents any JSON value.
 //
 // Call Type in order to determine the actual type of the JSON value.
