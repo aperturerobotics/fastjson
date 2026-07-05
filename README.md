@@ -1,11 +1,9 @@
 # fastjson
 
-[![GoDoc Widget]][GoDoc] [![Go Report Card Widget]][Go Report Card]
+[![GoDoc Widget]][GoDoc]
 
 [GoDoc]: https://godoc.org/github.com/aperturerobotics/fastjson
 [GoDoc Widget]: https://godoc.org/github.com/aperturerobotics/fastjson?status.svg
-[Go Report Card Widget]: https://goreportcard.com/badge/github.com/aperturerobotics/fastjson
-[Go Report Card]: https://goreportcard.com/report/github.com/aperturerobotics/fastjson
 
 **fastjson** is an alternative to **encoding/json** which does not use reflection.
 
